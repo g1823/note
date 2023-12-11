@@ -17,6 +17,24 @@ def ignore_file_or_folder(item_name, is_file):
     return False  # 当所有模式都检查完后才返回 False
 
 
+# 当文件路径上有空格时，处理空格，即处理文件名有空格的情况
+# 路径上有空格的情况暂时不处理，即文件夹有空格暂时不处理
+# 不需要
+def handle_space(path):
+    if os.path.exists(path):
+        file_name = os.path.basename(path)
+        new_file_name = file_name.replace(' ', '%20')
+        # 获取文件所在的目录路径
+        directory = os.path.dirname(path)
+        # 构建新的文件路径
+        new_file_path = os.path.join(directory, new_file_name)
+        # 重命名文件
+        os.rename(path, new_file_path)
+        return new_file_path  # 返回修改后的文件路径
+    else:
+        return "File not found"
+
+
 # root_folder:项目根路径
 # folder_path:当前文件夹路径
 # 转化结果存储位置
@@ -45,7 +63,7 @@ def handle_files(root_folder, folder_path, markdown_list):
         file_name = os.path.basename(file_path)
         # 缩进值=相对路径中的/的个数
         indentation = ' ' * (relative_path.count(os.sep) * 3)
-        item = f"{indentation}- [{os.path.splitext(file_name.replace(' ', ''))[0]}]({relative_path.replace(os.sep, '/')})"
+        item = f"{indentation}- [{os.path.splitext(file_name)[0]}]({relative_path.replace(os.sep, '/').replace(' ','%20')})"
         markdown_list.append(item)
 
     # 再处理文件夹
@@ -55,17 +73,12 @@ def handle_files(root_folder, folder_path, markdown_list):
         folder_name = os.path.basename(folder_path)
         # 缩进值=相对路径中的/的个数
         indentation = ' ' * (relative_path.count(os.sep) * 3)
-        item = f"{indentation}- {os.path.splitext(folder_name.replace(' ', '%20'))[0]}"
+        item = f"{indentation}- {os.path.splitext(folder_name)[0]}"
         markdown_list.append(item)
         handle_files(root_folder, folder_path, markdown_list)
 
-    # 去除文件中的空格，并修改对应的文件名
-    # directory, filename = os.path.split(relative_path) # 获取文件目录以及文件名
-    # new_filename = filename.replace(' ', '') # 移除文件名中的空格，并修改对应文件名字
-    # new_file_path = os.path.join(directory, new_filename)
-    # os.rename(relative_path, new_file_path)
 
-
+# 将笔记转化为markdown列表
 def generate_markdown_list(root_folder, folders_to_convert):
     markdown_list = []
     for folder_name in folders_to_convert:
